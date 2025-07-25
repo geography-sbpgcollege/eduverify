@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduVerify - Product Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-50 transition-opacity duration-500">
+        <div class="text-center">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-xl bg-white flex items-center justify-center shadow-lg">
+                <i class="fas fa-graduation-cap text-indigo-600 text-5xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2 slide-up">EduVerify</h1>
+            <p class="text-indigo-100 slide-up delay-100">Authenticating educational products</p>
+        </div>
+        <div class="absolute bottom-8 text-indigo-200 text-sm">
+            <p>Loading security protocols...</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="min-h-screen hidden">
+        <!-- Header -->
+        <header class="bg-indigo-600 text-white shadow-md">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-graduation-cap text-2xl"></i>
+                        <h1 class="text-2xl font-bold">EduVerify</h1>
+                    </div>
+                    <div class="text-sm">
+                        <span class="hidden md:inline-block">Genuine product authentication</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <div class="max-w-2xl mx-auto">
+                <!-- Verification Form -->
+                <div id="verification-form" class="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8 fade-in">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-key text-indigo-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Product Verification</h2>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-6">Enter your 11-digit alphanumeric product verification code to authenticate your educational product.</p>
+                    
+                    <form id="verify-form" class="space-y-5">
+                        <div>
+                            <label for="verification-code" class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="verification-code" 
+                                    name="verification-code" 
+                                    placeholder="e.g. ED12X45YZ78" 
+                                    maxlength="11"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                                    required
+                                >
+                                <div class="absolute right-3 top-3 text-gray-400">
+                                    <i class="fas fa-qrcode"></i>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">You can find this on the product packaging or documentation.</p>
+                        </div>
+                        
+                        <div>
+                            <button 
+                                type="submit" 
+                                id="verify-button"
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition duration-200"
+                            >
+                                <span id="button-text">Verify Product</span>
+                                <span id="button-spinner" class="hidden ml-2">
+                                    <div class="spinner"></div>
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Verification Results -->
+                <div id="verification-results" class="hidden bg-white rounded-xl shadow-md p-6 md:p-8 mb-8 fade-in">
+                    <div class="flex items-center mb-6">
+                        <div id="result-icon" class="p-3 rounded-full mr-4">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
+                        <h2 id="result-title" class="text-xl font-semibold"></h2>
+                    </div>
+                    
+                    <div id="result-message" class="mb-6">
+                        <p id="result-text" class="text-gray-800"></p>
+                    </div>
+                    
+                    <!-- Product Details (shown only for valid verification) -->
+                    <div id="product-details" class="hidden bg-gray-50 rounded-lg p-5 border border-gray-200">
+                        <h3 class="font-medium text-gray-700 mb-4">Product Information</h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Type of Product</p>
+                                    <p id="product-type" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Product ID</p>
+                                    <p id="product-id" class="font-medium">-</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Date Purchased</p>
+                                    <p id="purchase-date" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Title</p>
+                                    <p id="product-title" class="font-medium">-</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Activation Status</p>
+                                    <p id="activation-status" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">License Duration</p>
+                                    <p id="license-duration" class="font-medium">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button 
+                            id="verify-another-btn"
+                            class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center transition duration-200"
+                        >
+                            <i class="fas fa-undo mr-2"></i> Verify another product
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info Boxes -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-5">
+                        <div class="flex items-start">
+                            <div class="bg-indigo-100 p-2 rounded-lg mr-4">
+                                <i class="fas fa-shield-alt text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800 mb-1">Security Guaranteed</h3>
+                                <p class="text-sm text-gray-600">Our verification system uses advanced encryption to ensure your product is genuine.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-5">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 p-2 rounded-lg mr-4">
+                                <i class="fas fa-headset text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800 mb-1">Need Help?</h3>
+                                <p class="text-sm text-gray-600">Contact our customer support if you're having trouble with your product verification.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-100 border-t border-gray-200 py-8">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-graduation-cap text-indigo-600"></i>
+                            <span class="font-medium">EduVerify</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Authentic educational products verification</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-500 hover:text-gray-700"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="mt-6 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
+                    <p>© 2023 EduVerify. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate splash screen loading
+            setTimeout(function() {
+                document.getElementById('splash-screen').classList.add('opacity-0');
+                setTimeout(function() {
+                    document.getElementById('splash-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                }, 500);
+            }, 2000);
+
+            // Form submission
+            const verifyForm = document.getElementById('verify-form');
+            const verificationResults = document.getElementById('verification-results');
+            const verifyButton = document.getElementById('verify-button');
+            const buttonText = document.getElementById('button-text');
+            const buttonSpinner = document.getElementById('button-spinner');
+
+            verifyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const verificationCode = document.getElementById('verification-code').value.trim();
+                
+                // Validate code format
+                if (!/^[A-Za-z0-9]{11}$/.test(verificationCode)) {
+                    alert('Please enter a valid 11-digit alphanumeric code');
+                    return;
+                }
+                
+                // Show loading state
+                verifyButton.disabled = true;
+                buttonText.textContent = 'Verifying...';
+                buttonSpinner.classList.remove('hidden');
+                
+                // Simulate API call delay
+                setTimeout(function() {
+                    // Hide form and show results
+                    document.getElementById('verification-form').classList.add('hidden');
+                    verificationResults.classList.remove('hidden');
+                    
+                    // Reset button state
+                    verifyButton.disabled = false;
+                    buttonText.textContent = 'Verify Product';
+                    buttonSpinner.classList.add('hidden');
+                    
+                    // Check if code exists in database (uppercase comparison)
+                    const normalizedCode = verificationCode.toUpperCase();
+                    if (productDatabase[normalizedCode]) {
+                        showValidResult(verificationCode);
+                    } else {
+                        showInvalidResult();
+                    }
+                }, 1500);
+            });
+            
+            // Verify another product button
+            document.getElementById('verify-another-btn').addEventListener('click', function() {
+                verificationResults.classList.add('hidden');
+                document.getElementById('verification-form').classList.remove('hidden');
+                document.getElementById('verification-code').value = '';
+                document.getElementById('verification-code').focus();
+            });
+            
+            // Product database
+            const productDatabase = {
+                'EDU12345678': {
+                    type: 'Online Course',
+                    title: 'Advanced Mathematics Masterclass',
+                    purchaseDate: '2023-10-15',
+                    activationStatus: 'Active',
+                    licenseDuration: '1 Year',
+                    expiryDate: '2024-10-15'
+                },
+                'EDU87654321': {
+                    type: 'E-Book',
+                    title: 'Introduction to Quantum Physics',
+                    purchaseDate: '2023-09-20',
+                    activationStatus: 'Active',
+                    licenseDuration: 'Lifetime',
+                    expiryDate: 'Never'
+                },
+                'EDU11223344': {
+                    type: 'Software License',
+                    title: 'Chemistry Lab Simulator Pro',
+                    purchaseDate: '2023-11-05',
+                    activationStatus: 'Active',
+                    licenseDuration: '2 Years',
+                    expiryDate: '2025-11-05'
+                },
+                'EDU55667788': {
+                    type: 'Video Course',
+                    title: 'Complete Web Development Bootcamp',
+                    purchaseDate: '2023-08-12',
+                    activationStatus: 'Active',
+                    licenseDuration: '6 Months',
+                    expiryDate: '2024-02-12'
+                },
+                'EDU99001122': {
+                    type: 'Interactive Kit',
+                    title: 'Robotics Starter Kit',
+                    purchaseDate: '2023-07-30',
+                    activationStatus: 'Active',
+                    licenseDuration: '1 Year',
+                    expiryDate: '2024-07-30'
+                },
+                'EDU33445566': {
+                    type: 'Membership',
+                    title: 'Premium Student Membership',
+                    purchaseDate: '2023-12-01',
+                    activationStatus: 'Active',
+                    licenseDuration: '3 Months',
+                    expiryDate: '2024-03-01'
+                },
+                'EDU77889900': {
+                    type: 'Online Course',
+                    title: 'Artificial Intelligence Fundamentals',
+                    purchaseDate: '2023-10-25',
+                    activationStatus: 'Active',
+                    licenseDuration: '1 Year',
+                    expiryDate: '2024-10-25'
+                },
+                'EDU44556677': {
+                    type: 'E-Book Bundle',
+                    title: 'Computer Science Essentials',
+                    purchaseDate: '2023-09-15',
+                    activationStatus: 'Active',
+                    licenseDuration: 'Lifetime',
+                    expiryDate: 'Never'
+                },
+                'EDU22334455': {
+                    type: 'Software License',
+                    title: 'Physics Animation Suite',
+                    purchaseDate: '2023-11-20',
+                    activationStatus: 'Pending Activation',
+                    licenseDuration: '1 Year',
+                    expiryDate: '2024-11-20'
+                },
+                'EDU66778899': {
+                    type: 'Video Course',
+                    title: 'Data Science for Beginners',
+                    purchaseDate: '2023-08-05',
+                    activationStatus: 'Expired',
+                    licenseDuration: '1 Year',
+                    expiryDate: '2023-08-05'
+                }
+            };
+
+            function showValidResult(code) {
+                const resultIcon = document.getElementById('result-icon');
+                const resultTitle = document.getElementById('result-title');
+                const resultText = document.getElementById('result-text');
+                const productDetails = document.getElementById('product-details');
+
+                // Get product details from database
+                const product = productDatabase[code];
+                
+                // Set success UI
+                resultIcon.className = 'p-3 rounded-full mr-4 bg-green-100';
+                resultIcon.innerHTML = '<i class="fas fa-check-circle text-2xl text-green-600"></i>';
+                resultTitle.textContent = 'Product Verified!';
+                resultTitle.className = 'text-xl font-semibold text-green-700';
+                resultText.textContent = `The product with code ${code} has been successfully verified as genuine. Below are the product details:`;
+                resultText.className = 'text-gray-800';
+                
+                // Show product details
+                productDetails.classList.remove('hidden');
+                
+                // Fill with product data
+                document.getElementById('product-type').textContent = product.type;
+                document.getElementById('product-id').textContent = code;
+                document.getElementById('purchase-date').textContent = product.purchaseDate;
+                document.getElementById('product-title').textContent = product.title;
+                document.getElementById('activation-status').textContent = product.activationStatus;
+                document.getElementById('activation-status').className = 
+                    product.activationStatus === 'Active' ? 'font-medium text-green-600' : 
+                    product.activationStatus === 'Expired' ? 'font-medium text-red-600' : 'font-medium text-yellow-600';
+                document.getElementById('license-duration').textContent = 
+                    `${product.licenseDuration} (Expires: ${product.expiryDate})`;
+            }
+            
+            function showInvalidResult() {
+                const resultIcon = document.getElementById('result-icon');
+                const resultTitle = document.getElementById('result-title');
+                const resultText = document.getElementById('result-text');
+                const productDetails = document.getElementById('product-details');
+                
+                // Set error UI
+                resultIcon.className = 'p-3 rounded-full mr-4 bg-red-100';
+                resultIcon.innerHTML = '<i class="fas fa-exclamation-circle text-2xl text-red-600"></i>';
+                resultTitle.textContent = 'Verification Failed';
+                resultTitle.className = 'text-xl font-semibold text-red-700';
+                resultText.textContent = 'The product verification code you entered is invalid or this is not an original genuine copy. Please check the code and try again. If you believe this is an error, contact our support team.';
+                resultText.className = 'text-gray-800';
+                
+                // Hide product details
+                productDetails.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
